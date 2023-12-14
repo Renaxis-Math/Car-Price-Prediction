@@ -1,0 +1,3 @@
+TheoUpdate 1 100
+Trade Alice 1 -2 101
+Trade Bob 1 -2 99

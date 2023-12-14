@@ -1,0 +1,362 @@
+---
+title: "hw4"
+author: "Hoang Chu"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(faraway)
+```
+
+## 3.2
+```{r}
+data("cheddar")
+summary(cheddar)
+```
+### a.
+```{r cheddar}
+model_a <- lm(taste ~ ., cheddar)
+summary(model_a)
+```
+At 5% level, H2S and Lactic are statistically significant predictors.
+
+### b.
+```{r}
+model_b <- lm(taste ~ exp(Acetic) + exp(H2S) + Lactic, data = cheddar)
+summary(model_b)
+```
+At 5% level, Lactic and exp(H2S) are statistically significant predictors.
+
+### c.
+We can use F-test to compare these model because we want to compare between a base model (model_a) and a modified new model (model_b).
+
+```{r}
+anova_test <- anova(model_a, model_b)
+anova_test
+```
+The RSS of model_a is much lower (585.2) than that of model_b, hence model_a is better fit for the data.
+
+### d.
+```{r}
+delta_H2S <- 0.01
+predicted_change <- coef(model_a)["H2S"] * log(delta_H2S)
+predicted_change
+```
+Since H2S in model_a is in logarithmic form, when H2S increases by 0.01, the change in taste will be the previous coefficient times the log of the delta increase. The final result is -18.01469.
+
+### e.
+```{r}
+delta_log_H2S <- 0.01
+percentage_change <- (exp(delta_log_H2S) - 1) * 100
+percentage_change
+```
+If H2S increases by 0.01, The percentage change in H2S is 1%.
+
+## 4.
+```{r}
+data("sat")
+summary(sat)
+```
+
+```{r}
+model_a <- lm(total ~ expend + ratio + salary, data = sat)
+summary(model_a)
+```
+### a.
+Test of beta of salary is 0:
+```{r}
+t_test_salary <- coef(summary(model_a))["salary", "t value"]
+p_value_salary <- coef(summary(model_a))["salary", "Pr(>|t|)"]
+
+cat("T-Test for Salary Coefficient:\n")
+cat("t-value:", t_test_salary, "\n")
+cat("p-value:", p_value_salary, "\n")
+```
+We don't reject the null, hence salary does not have an effect on the response variable.
+
+Test of beta of salary, ratio, and expend all 0.
+```{r}
+f_test_all <- anova(model_a)
+cat("\nF-Test for All Coefficients:\n")
+f_test_all
+```
+From the ANOVA table, only extend is a statistically significant predictor to the responses.
+
+### b.
+```{r}
+model_b <- lm(total ~ expend + ratio + salary + takers, data = sat)
+```
+
+```{r}
+t_test_takers <- coef(summary(model_b))["takers", "t value"]
+p_value_takers <- coef(summary(model_b))["takers", "Pr(>|t|)"]
+
+cat("\nT-Test for Takers Coefficient:\n")
+cat("t-value:", t_test_takers, "\n")
+cat("p-value:", p_value_takers, "\n")
+```
+Based on the p-value, we reject the null. Hence, takers is a statistically significant predictor.
+
+```{r}
+anova_test_ab <- anova(model_a, model_b)
+anova_test_ab
+```
+
+From the ANOVA table, we can see that, as the difference between model_a and model_b is just the new predictor takers, and model_b shows a significant improvement in RSS from model_a, takers definitely contribute to the response, which is the same conclusion as the t-test above.
+
+## 6.
+```{r}
+data("happy")
+summary(happy)
+```
+### a.
+```{r}
+model <- lm(happy ~ money + sex + love + work, data = happy)
+summary(model)
+```
+At 1% level, love and work are statistically significant predictors.
+
+### b.
+```{r}
+summary_table <- table(happy)
+summary_table
+```
+
+The questional assumption is that some predictors should not have numerical values in the real number domain e.g 'sex', but they instead should have had categorical values.
+
+### c.
+Permutation Test
+```{r}
+set.seed(123)  # Set a random seed for reproducibility
+n_permutations <- 1000
+permutation_results <- numeric(n_permutations)
+
+for (i in 1:n_permutations) {
+  happy_permuted <- happy
+  happy_permuted$money <- sample(happy$money)
+  model_permuted <- lm(happy ~ money + work + sex + love, data = happy_permuted)
+  permutation_results[i] <- coef(model_permuted)["money"]
+}
+```
+
+```{r}
+observed_coef <- coef(model)["money"]
+p_value_permutation <- sum(abs(permutation_results) >= abs(observed_coef)) / n_permutations
+cat("\nP-value from Permutation Test (money predictor):\n")
+cat("p-value:", p_value_permutation, "\n")
+```
+
+Based on the p-value, 'money' is not a statistically significant predictor at 5% level.
+
+### d.
+```{r}
+hist(permutation_results, probability = TRUE, main = "Permutation Test for money Predictor")
+lines(density(permutation_results), col = "blue")
+```
+### e.
+```{r}
+hist(permutation_results, probability = TRUE, main = "Permutation Test for money Predictor")
+lines(density(permutation_results), col = "blue")
+grid <- seq(-3, 3, length = 300)
+t_density <- dt(grid, df = length(permutation_results) - 1)
+lines(grid, t_density, col = "red")
+```
+
+### f.
+```{r}
+set.seed(123)
+n_bootstrap <- 1000
+bootstrap_results <- numeric(n_bootstrap)
+
+for (i in 1:n_bootstrap) {
+  sample_indices <- sample(1:length(happy$money), replace = TRUE)
+  bootstrap_sample <- happy[sample_indices, ]
+  model_bootstrap <- lm(happy ~ money + love + sex + work, data = bootstrap_sample)
+  bootstrap_results[i] <- coef(model_bootstrap)["money"]
+}
+```
+
+```{r}
+# Calculate bootstrap confidence intervals
+conf_interval_90 <- quantile(bootstrap_results, c(0.05, 0.95))
+conf_interval_95 <- quantile(bootstrap_results, c(0.025, 0.975))
+
+# Check if zero falls within these confidence intervals
+zero_in_interval_90 <- conf_interval_90[1] <= 0 && conf_interval_90[2] >= 0
+zero_in_interval_95 <- conf_interval_95[1] <= 0 && conf_interval_95[2] >= 0
+
+# Output the results
+cat("\nBootstrap Confidence Intervals for money:\n")
+cat("90% Confidence Interval:", conf_interval_90, "\n")
+cat("95% Confidence Interval:", conf_interval_95, "\n")
+cat("Zero within 90% Confidence Interval:", zero_in_interval_90, "\n")
+cat("Zero within 95% Confidence Interval:", zero_in_interval_95, "\n")
+```
+ZERO does NOT fall within these confidence intervals. This is consistant with the result from the permutation test above as we will reject the null that money is a statistically significant predictor at 5% level.
+
+## 4.1
+
+### a.
+```{r}
+data("prostate")
+summary(prostate)
+```
+
+```{r}
+model <- lm(lpsa ~ ., data = prostate)
+summary(model)
+```
+### a.
+```{r}
+new_patient <- data.frame(
+  lcavol = 1.44692,
+  lweight = 3.62301,
+  age = 65.00000,
+  lbph = 0.30010,
+  svi = 0.00000,
+  lcp = -0.79851,
+  gleason = 7.00000,
+  pgg45 = 15.00000
+)
+
+predicted_lpsa <- predict(model, newdata = new_patient, interval = "prediction", level = 0.95)
+
+cat("Predicted lpsa:", predicted_lpsa[1], "\n")
+cat("95% Confidence Interval for lpsa:", predicted_lpsa[2], "to", predicted_lpsa[3], "\n")
+```
+
+### b.
+```{r}
+new_patient_age_20 <- data.frame(
+  lcavol = 1.44692,
+  lweight = 3.62301,
+  age = 20.00000,  # Updated age
+  lbph = 0.30010,
+  svi = 0.00000,
+  lcp = -0.79851,
+  gleason = 7.00000,
+  pgg45 = 15.00000
+)
+
+predicted_lpsa_age_20 <- predict(model, newdata = new_patient_age_20, interval = "prediction", level = 0.95)
+
+cat("Predicted lpsa (age = 20):", predicted_lpsa_age_20[1], "\n")
+cat("95% Confidence Interval for lpsa (age = 20):", predicted_lpsa_age_20[2], "to", predicted_lpsa_age_20[3], "\n")
+```
+
+The CI is wider for the patient with age = 20 compared to the patient with age = 65 because at 5% level, age is one of the predictors in the regression model. When age is set to 20, it results in a prediction that is further away from the mean response value of the model compared to when age is 65. This increased deviation from the mean response leads to greater uncertainty in the prediction, resulting in a wider CI.
+
+### c.
+```{r}
+significant_predictors_model <- lm(lpsa ~ lcavol + lweight + age + lbph + svi, data = prostate)
+summary(significant_predictors_model)
+```
+
+```{r}
+new_patient_age_20 <- data.frame(
+  lcavol = 1.44692,
+  lweight = 3.62301,
+  age = 20.00000,  # Updated age
+  lbph = 0.30010,
+  svi = 0.00000,
+  lcp = -0.79851,
+  gleason = 7.00000,
+  pgg45 = 15.00000
+)
+
+# Predict lpsa for the new patient with age = 20 using the model with significant predictors
+predicted_lpsa_age_20_significant <- predict(significant_predictors_model, newdata = new_patient_age_20, interval = "prediction", level = 0.95)
+
+# Output the prediction and 95% confidence interval for lpsa with age = 20 using the model with significant predictors
+cat("Predicted lpsa (age = 20, significant predictors only):", predicted_lpsa_age_20_significant[1], "\n")
+cat("95% Confidence Interval for lpsa (age = 20, significant predictors only):", predicted_lpsa_age_20_significant[2], "to", predicted_lpsa_age_20_significant[3], "\n")
+```
+
+The CIs for the predictions made with the model containing only significant predictors are narrower than the CIs from the previous model because the model's predictions are based on fewer variables, resulting in reduced uncertainty.
+
+## 5.
+```{r}
+data("fat")
+summary(fat)
+```
+
+```{r}
+full_model <- lm(brozek ~ ., data = fat)
+smaller_model <- lm(brozek ~ age + weight + height + abdom, data = fat)
+```
+
+```{r}
+summary(smaller_model)
+```
+
+```{r}
+summary(full_model)
+```
+
+```{r}
+anova_test <- anova(full_model, smaller_model)
+anova_test
+```
+
+I don't think it's justificable to use the smaller model instead of the full model because the smaller model has a higher RSS, lower R-Squared, and we can see in the summary of the full model, there are statistically significant predictors we left out e.g 'siri', 'density'.
+
+### b.
+```{r}
+median_values <- sapply(fat[, -1], median)
+new_data_median <- data.frame(t(median_values))
+
+pred_interval_smaller_median <- predict(smaller_model, newdata = new_data_median, interval = "prediction", level = 0.95)
+
+pred_interval_full_median <- predict(full_model, newdata = new_data_median, interval = "prediction", level = 0.95)
+```
+
+```{r}
+pred_interval_smaller_median
+```
+
+```{r}
+pred_interval_full_median
+```
+
+The CIs differ by a practically importance amount. The CI in the full model is much smaller than that of in the smaller mode.
+
+### c.
+```{r}
+anomalous_cases_smaller <- residuals(smaller_model)[25:50]
+
+# Identify observations with particularly large residuals
+outliers_smaller <- which(abs(anomalous_cases_smaller) > 1.5 * sd(anomalous_cases_smaller))
+
+outliers_smaller
+```
+
+Observations 32 and 39 seems to be anomalous as they're 1.5 times standard deviation away from the mean.
+
+### d.
+```{r}
+fat_cleaned <- fat[-outliers_smaller, ]
+median_values <- sapply(fat_cleaned[, -1], median)
+new_data_median <- data.frame(t(median_values))
+
+smaller_model_cleaned <- lm(brozek ~ age + weight + height + abdom, data = fat_cleaned)
+full_model_cleaned <- lm(brozek ~ ., data = fat_cleaned)
+
+pred_interval_smaller_cleaned <- predict(smaller_model_cleaned, newdata = new_data_median, interval = "prediction", level = 0.95)
+pred_interval_full_cleaned <- predict(full_model, newdata = new_data_median, interval = "prediction", level = 0.95)
+```
+
+```{r}
+pred_interval_smaller_cleaned
+```
+Look like removing the anomalous observations does not make much difference to the CI of the smaller model
+
+```{r}
+pred_interval_full_cleaned
+```
+
+Similarly, look like removing the anomalous observations does not make much difference to the CI of the full model.

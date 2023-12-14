@@ -1,0 +1,7 @@
+# NeuralNetwork
+This is my own implementation of a simple feed forward neural network. The network is organized into layers where each layer consists of a set of neurons that can be of varying types. To facilitate this, I have created an abstract base class, Neuron, from which various types inherit. I have created Sigmoidal, Tanh, Linear, and Exponential neurons. I have also implemented backpropagation to allow for the calculation of derivatives and also training. In order to illustrate all of this, I have included the well-known XOR problem where a non-linear decision boundary has to be learned.
+
+Note that this is a system that can be easily configured to use various architectures. The NeuralNetwork class takes as one of its parameters a std::vector of std::string where each string represents the neurons to be used in one particular layer. As an example the string "sslte" corresponds to a layer with five neurons, the first two of which are sigmoidal ("s"), followed by a linear ("l"), tanh ("t"), and finally an exponential ("e"). To create a network with three layers of sigmoidal units with 5,3,2 units per layer, the last of which is an output layer you would push the following three std::strings to the vector: "sssss","sss","ss". Note that at this time all the layers are fully connected. I may allow for other architectures in the future.
+
+It’s written in C++ but I intend on adding a python wrapper which can read a config file where various options can be set (type of hill climbing method, the exact configuration of the various layers, etc.)
+

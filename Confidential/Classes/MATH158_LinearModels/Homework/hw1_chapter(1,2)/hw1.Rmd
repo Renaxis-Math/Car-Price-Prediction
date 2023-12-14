@@ -1,0 +1,107 @@
+---
+title: "Homework 2"
+author: "Hoang Chu"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, echo=FALSE, message=FALSE}
+knitr::opts_chunk$set(comment = NA, message=F, warning=F)
+library(faraway)
+library(magrittr)
+library(tidyverse)
+```
+
+# 2.
+```{r}
+data("uswages")
+?uswages
+summary(uswages)
+
+m <- lm(wage ~ educ + exper, uswages)
+summary(m)
+```
+
+For every year of education the model estimates a \$51 per week increase in wage. For every year of experience the model esimates only \$10.
+
+```{r log_wage}
+update(m, log(wage, 10) ~ .) %>% summary()
+```
+
+Log transformation of the response, means we interpret the coefficients as magitude (multiplicative) changes. So for each year of education the model expects a 4% increase in wage. For each year of experience < 1%.
+
+# 3.
+
+```{r hand_calc}
+x <- 1:20
+y <- x + rnorm(20)
+
+m <- lm(y ~ I(x^2))
+summary(m)
+
+direct_calc <- function(x, y, degree = 2) {
+  x_mat <- model.matrix(~I(x^degree))
+  solve(crossprod(x_mat), crossprod(x_mat, y))
+}
+
+direct_calc(x, y)
+
+map(set_names(3:7), possibly(~ direct_calc(x, y, degree = .), "Error"))
+```
+
+# 5.
+
+```{r prostate2}
+m <- lm(lcavol ~ lpsa, prostate)
+m2 <- lm(lpsa ~ lcavol, prostate)
+
+ggplot(prostate, aes(lcavol, lpsa)) +
+  geom_point(alpha = .5) +
+  geom_line(aes(x = predict(m), color = "lcavol ~ lpsa")) +
+  geom_line(aes(y = predict(m2), color = "lpsa ~ lcavol")) +
+  geom_point(aes(y = 2.48, x = 1.36), shape = 1, size = 10)
+```
+
+Algebra not showm but you can calculate the intesection if you solve for either `lcavol` or `lpsa` in the system of equations represented by the model coefficients.
+
+# 6.
+
+```{r cheddar}
+data("cheddar")
+summary(cheddar)
+```
+
+## a.
+
+```{r cheddar_a}
+m <- lm(taste ~ ., cheddar)
+summary(m)
+```
+
+## b.
+
+```{r cheddar_b}
+cor(m$fitted.values, cheddar$taste)^2
+```
+
+R-Squared, the coeffecient of determination or percentage of variance explained
+
+## c. 
+
+```{r cheddar_c}
+m2 <- update(m, . ~ -1 + .)
+cor(m2$fitted.values, cheddar$taste)^2
+```
+
+## d.
+
+```{r cheddar_d}
+m_mat <- model.matrix(m)
+
+qr_decomp <- qr(m_mat)
+
+backsolve(
+  qr.R(qr_decomp), # upper-right
+  t(qr.Q(qr_decomp)) %*% cheddar$taste
+)
+```

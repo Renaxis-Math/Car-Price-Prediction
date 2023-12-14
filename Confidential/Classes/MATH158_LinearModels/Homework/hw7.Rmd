@@ -1,0 +1,214 @@
+---
+title: "hw7"
+author: "Hoang Chu"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(faraway)
+library(MASS)
+```
+
+# 10.1
+```{r}
+# Load the prostate data
+data(prostate)
+
+# Full model with lpsa as the response and all other variables as predictors
+full_model <- lm(lpsa ~ ., data = prostate)
+
+# (a) Backward elimination
+backward_model <- stepAIC(full_model, direction = "backward")
+
+# (b) AIC
+aic_model <- stepAIC(full_model, direction = "both")
+
+# (c) Adjusted R-squared
+# The model with the highest adjusted R-squared is considered the best
+adj_r_squared <- summary(full_model)$adj.r.squared
+
+# (d) Mallows Cp
+# Compute the residuals and the predicted values
+residuals <- resid(full_model)
+predicted <- predict(full_model)
+
+# Compute the error sum of squares
+sse <- sum(residuals^2)
+
+# Compute the total sum of squares
+sst <- sum((predicted - mean(predicted))^2)
+
+# Compute Cp
+p <- length(coef(full_model)) - 1
+n <- length(predicted)
+mse <- sse / n
+cp <- (sse + 2 * p * mse) / n
+```
+
+# 10.3
+```{r}
+# Load the divusa data
+data(divusa)
+
+# Full model with divorce as the response and all other variables as predictors
+full_model <- lm(divorce ~ ., data = divusa)
+
+# (a) Backward elimination
+backward_model <- stepAIC(full_model, direction = "backward")
+
+# (b) AIC
+aic_model <- stepAIC(full_model, direction = "both")
+
+# (c) Adjusted R-squared
+# The model with the highest adjusted R-squared is considered the best
+adj_r_squared <- summary(full_model)$adj.r.squared
+
+# (d) Mallows Cp
+# Compute the residuals and the predicted values
+residuals <- resid(full_model)
+predicted <- predict(full_model)
+
+# Compute the error sum of squares
+sse <- sum(residuals^2)
+
+# Compute the total sum of squares
+sst <- sum((predicted - mean(predicted))^2)
+
+# Compute Cp
+p <- length(coef(full_model)) - 1
+n <- length(predicted)
+mse <- sse / n
+cp <- (sse + 2 * p * mse) / n
+```
+
+# 11.2
+```{r}
+# Load the libraries
+library(pls)
+
+# Load the seatpos data
+data(seatpos)
+
+# Fit a PLS model with hipcenter as the response and all other variables as predictors
+pls.model <- plsr(hipcenter ~ ., data = seatpos, ncomp = 2)
+
+# Print a summary of the model
+summary(pls.model)
+
+# Predict the response at the values of the predictors specified in the first question
+# Assuming 'predictors' is a data frame containing the predictor values
+predictors <- data.frame(seatpos[1, -which(names(seatpos) == "hipcenter")])
+predictions <- predict(pls.model, predictors)
+
+# Print the predictions
+print(predictions)
+```
+
+# 11.4
+```{r}
+# Load necessary libraries
+library(faraway)
+library(glmnet)
+library(pls)
+
+# Load the data
+data(fat)
+
+# Remove brozek and density columns
+fat <- fat[, !(names(fat) %in% c("brozek", "density"))]
+
+# Split the data into training and test sets
+train_indices <- seq(1, nrow(fat), by = 10)
+train_data <- fat[-train_indices, ]
+test_data <- fat[train_indices, ]
+
+# (a) Linear regression with all predictors
+model_a <- lm(siri ~ ., data = train_data)
+
+# (b) Linear regression with variables selected using AIC
+model_b <- step(lm(siri ~ ., data = train_data), trace = 0)
+
+# (c) Principal component regression
+model_c <- pcr(siri ~ ., data = train_data, validation = "CV")
+
+# (d) Partial least squares
+model_d <- plsr(siri ~ ., data = train_data, validation = "CV")
+
+# (e) Ridge regression
+x <- model.matrix(siri ~ . - 1, data = train_data)
+y <- train_data$siri
+model_e <- cv.glmnet(x, y, alpha = 0)
+
+# Use the models to predict the response in the test sample
+pred_a <- predict(model_a, newdata = test_data)
+pred_b <- predict(model_b, newdata = test_data)
+pred_c <- predict(model_c, newdata = test_data, ncomp = model_c$ncomp)
+pred_d <- predict(model_d, newdata = test_data, ncomp = model_d$ncomp)
+pred_e <- predict(model_e, newx = model.matrix(siri ~ . - 1, data = test_data), s = model_e$lambda.min)
+
+# Report on the performances of the models
+models <- list("Linear regression with all predictors" = pred_a, 
+               "Linear regression with variables selected using AIC" = pred_b, 
+               "Principal component regression" = pred_c, 
+               "Partial least squares" = pred_d, 
+               "Ridge regression" = pred_e)
+
+for (name in names(models)) {
+  cat(name, ": ", sqrt(mean((test_data$siri - models[[name]])^2)), "\n")
+}
+```
+
+# 11.5
+```{r}
+# Load the data
+data(gasoline, package="pls")
+
+# Compute the mean value for each frequency
+mean_values <- colMeans(gasoline$NIR)
+
+# Split the data into training and test sets
+train_indices <- seq(1, nrow(gasoline), by = 10)
+train_data <- gasoline[-train_indices, ]
+test_data <- gasoline[train_indices, ]
+
+# (a) Linear regression with all predictors
+model_a <- lm(octane ~ ., data = train_data)
+
+# AIC is infinity for this model since there are very few observations compared to predictors -> overfitting -> disregard the model.
+# model_b <- step(lm(octane ~ ., data = train_data), trace = 0)
+
+# (c) Principal component regression
+model_c <- pcr(octane ~ ., data = train_data, validation = "CV")
+
+# (d) Partial least squares
+model_d <- plsr(octane ~ ., data = train_data, validation = "CV")
+
+# (e) Ridge regression
+x <- model.matrix(octane ~ . - 1, data = train_data)
+y <- train_data$octane
+model_e <- cv.glmnet(x, y, alpha = 0)
+
+# Use the models to predict the response in the test sample
+pred_a <- predict(model_a, newdata = test_data)
+# pred_b <- predict(model_b, newdata = test_data)
+pred_c <- predict(model_c, newdata = test_data, ncomp = model_c$ncomp)
+pred_d <- predict(model_d, newdata = test_data, ncomp = model_d$ncomp)
+pred_e <- predict(model_e, newx = model.matrix(octane ~ . - 1, data = test_data), s = model_e$lambda.min)
+
+# Report on the performances of the models
+models <- list("Linear regression with all predictors" = pred_a,
+               "Principal component regression" = pred_c, 
+               "Partial least squares" = pred_d, 
+               "Ridge regression" = pred_e)
+
+for (name in names(models)) {
+  cat(name, ": ", sqrt(mean((test_data$octane - models[[name]])^2)), "\n")
+}
+```
+There is a warning for a full linear regression model. This is due to the same reason as AIC (too few observations compared to predictors) and multi-collinearity.
+Hence the output value for the linear regression with all predictors is unreliable.

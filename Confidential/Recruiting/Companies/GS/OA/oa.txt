@@ -1,0 +1,17 @@
+1. You are dealt 5 cards at random from a deck of poker cards, and are told that at-least 3 of them are aces. What is probability that you have all 4 aces in the dealt cards?
+
+1/95
+
+2. If the position of a particle on the x-axis at time t is -5t2, then the average velocity of the particle for 0 <= t <= 3 is
+
+-15
+
+3.Let T: R? -> R3 be a linear map satisfying T(2,7) = (1,-2,2) and T(1,2) = (1,-2,1).
+
+1
+
+4. If exactly 4 are selected for inspection at random, what is the probability that all 4 inspected printers are inkjets?
+
+0.10
+
+5. Calculus - Integration 2

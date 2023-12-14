@@ -1,0 +1,8 @@
+ADD 1 TaylorSwift 100  10
+ADD 2 TaylorSwift 101 -10
+ADD 3 TaylorSwift 99   5
+ADD 4 TaylorSwift 102 -5
+ADD 5 TaylorSwift 98 2
+ADD 6 TaylorSwift 99   5
+DEL_PRICE TaylorSwift 100
+TaylorSwift 1

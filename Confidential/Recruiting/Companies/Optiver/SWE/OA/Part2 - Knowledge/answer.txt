@@ -1,0 +1,18 @@
+binary_tree_leaf_nodes: n + 1
+bitwise_computation: 0x02
+circula_buffer: circula_buffer
+class_coupling: I
+david_8core_book: The Art of Multithreaded Programming
+digits_representation: 30
+expected_no_comparisons: 3
+inter_process_communication: TCP/IP, Signals, Unix Domain Socket, Shared Memory
+FastPath: Branch Predictor
+latency: 40ms
+linked_list_insert: O(1)
+Multithreading: Can help to take advantage of multi-CPU architecture, Can help to make a GUI more responsive
+Multithread_runtime: 4x
+Stack: [44, 12, 28]
+TCP_IP: broadcasting...
+values_012: bool
+sync_in_multithread: Unix Signals
+Walter_OS: scheduler

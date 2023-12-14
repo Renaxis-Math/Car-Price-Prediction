@@ -1,0 +1,94 @@
+---
+title: "lab3"
+author: "Hoang Chu"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(faraway)
+```
+
+# 9.3
+```{r}
+data(ozone)
+```
+
+```{r}
+model <- lm(O3 ~ temp + humidity + ibh, data = ozone)
+summary(model)
+```
+```{r}
+all(ozone$O3 > 0)
+```
+
+```{r}
+library(MASS)
+bc <- boxcox(model, lambda = seq(-3,3,0.1))
+best_lambda <- bc$x[which.max(bc$y)]
+```
+
+```{r}
+ozone$O3 <- (ozone$O3^best_lambda - 1) / best_lambda
+model_transformed <- lm(O3 ~ temp + humidity + ibh, data = ozone)
+```
+
+```{r}
+summary(model_transformed)
+```
+
+# 9.5
+```{r}
+data(trees)
+pairs(trees)
+```
+
+```{r}
+all(trees$Volume > 0)
+```
+
+```{r}
+library(MASS)
+# Use the Box-Cox transformation to find optimal lambda for transformation
+boxcox_result <- boxcox(Volume ~ Girth + Height, data = trees)
+lambda <- boxcox_result$x[which.max(boxcox_result$y)]
+trees$transformed_volume <- (trees$Volume^lambda - 1) / lambda
+```
+
+```{r}
+model <- lm(transformed_volume ~ Girth + Height, data = trees)
+summary(model)
+```
+
+# 9.8
+```{r}
+# Load the cars dataset
+data(cars)
+
+# (a) Plot distance against speed
+plot(cars$speed, cars$dist, main = "Distance vs Speed", xlab = "Speed", ylab = "Distance")
+
+# (b) Show a linear fit to the data on the plot
+abline(lm(dist ~ speed, data = cars), col = "blue")
+
+# (c) Show a quadratic fit to the data on the plot
+model_quad <- lm(dist ~ speed + I(speed^2), data = cars)
+lines(cars$speed, predict(model_quad), col = "red")
+
+# (d) Now use sqrt(dist) as the response and fit a linear model. Show the fit on the same plot
+model_sqrt <- lm(sqrt(dist) ~ speed, data = cars)
+lines(cars$speed, predict(model_sqrt)^2, col = "green")
+```
+
+```{r}
+# (e) Compute the default smoothing spline fit to the plot and display on a fresh plot of the data
+smooth_spline_fit <- smooth.spline(cars$speed, cars$dist)
+plot(cars$speed, cars$dist, main = "Distance vs Speed with Smoothing Spline", xlab = "Speed", ylab = "Distance")
+lines(smooth_spline_fit, col = "purple")
+```

@@ -1,0 +1,14 @@
+---
+title: "Homework 2"
+author: "Hoang Chu"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(faraway)
+library(tidyverse)
+```
+
+

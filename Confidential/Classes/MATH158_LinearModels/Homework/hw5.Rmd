@@ -1,0 +1,300 @@
+---
+title: "hw5"
+author: "Hoang Chu"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(faraway)
+```
+
+# 6.1
+
+```{r}
+data("sat")
+summary(sat)
+```
+
+```{r}
+m <- lm(total ~ expend + ratio + salary + takers, data=sat)
+```
+
+## a.
+```{r}
+residuals <- resid(m)
+```
+
+```{r}
+plot(fitted(m), residuals, col="grey", pch=20, xlab="Fitted", ylab="Residuals", main = "SAT data")
+abline(h=0, col="darkorange", lwd=2)
+```
+
+From the residual-fitted plot, spread of residuals is roughly constant across the range of fitted values, hence the equal variance assumption is satisfied. However, the plot indicates some non-linearity.
+
+We can improve non-linearity by taking the log.
+```{r}
+log_m <- lm(log(total) ~ expend + salary + ratio + takers, data = sat)
+plot(fitted(log_m), residuals(log_m), xlab = "Fitted", ylab = "Residuals")
+abline(h=0)
+```
+As variances hover more and more around 0, the non-linearity has been improved.
+
+## b.
+```{r}
+qqnorm(residuals)
+qqline(residuals)
+shapiro.test(residuals)
+```
+
+Since the shapiro p-value is more than 0.05, we fail the reject the null hypothesis of the test which is the residuals are normally distributed. Hence the normally assumption is satisfied.
+
+## c.
+```{r}
+hatvalues(m)[hatvalues(m) > 2 * mean(hatvalues(m))]
+```
+We can see that [California, Connecticut, New Jersey, and Utah] are leverage points.
+
+### d.
+```{r}
+rstandard(m)[abs(rstandard(m)) > 2]
+```
+We can see that [New Hampshire, North Dakota, Utah, and West Virginia] are outliers.
+
+Since Utah appeared in both leverage points and outliers, it has a significant pull to our linear model. Hence, it's better to remove it.
+
+### e.
+```{r}
+cook_dist <- cooks.distance(m)
+```
+
+```{r}
+cook_dist['New Hampshire'] > 4 / length(cook_dist)
+cook_dist['North Dakota'] > 4 / length(cook_dist)
+cook_dist['Utah'] > 4 / length(cook_dist)
+cook_dist['West Virginia'] > 4 / length(cook_dist)
+```
+
+We can see that only [Utah, West Virginia] are influential points, and should be removed.
+
+### f.
+
+```{r}
+termplot(m,partial.resid = T)
+```
+
+The flatness of the lines associated with three of the variables (expend, salary, and ratio) reflect their lack of significance.
+
+The model may be improved by dropping them.
+
+# 6.3
+```{r}
+data("prostate")
+```
+
+```{r}
+m <- lm(lpsa ~ ., data=prostate)
+```
+
+## a.
+```{r}
+residuals <- resid(m)
+```
+
+```{r}
+plot(fitted(m), residuals, col="grey", pch=20, xlab="Fitted", ylab="Residuals", main = "Prostate data")
+abline(h=0, col="darkorange", lwd=2)
+```
+
+From the residual-fitted plot, spread of residuals is roughly constant across the range of fitted values, hence the equal variance assumption is satisfied, and the linear assumption is also satisfied as variances hover around 0.
+
+```{r}
+log_m <- lm(log(lpsa) ~ ., data=prostate)
+plot(fitted(log_m), residuals(log_m), xlab = "Fitted", ylab = "Residuals")
+abline(h=0)
+```
+
+## b.
+```{r}
+qqnorm(residuals)
+qqline(residuals)
+shapiro.test(residuals)
+```
+
+Since the shapiro p-value is more than 0.05, we fail the reject the null hypothesis of the test which is the residuals are normally distributed. Hence the normally assumption is satisfied.
+
+## c.
+```{r}
+hatvalues(m)[hatvalues(m) > 2 * mean(hatvalues(m))]
+```
+We can see that observations [32, 37, 41, 74, 92] are leverage points.
+
+### d.
+```{r}
+rstandard(m)[abs(rstandard(m)) > 2]
+```
+We can see that [39, 47, 69, 95, 97] are outliers.
+
+### e.
+```{r}
+cook_dist <- cooks.distance(m)
+```
+
+```{r}
+cook_dist[39] > 4 / length(cook_dist)
+cook_dist[47] > 4 / length(cook_dist)
+cook_dist[69] > 4 / length(cook_dist)
+cook_dist[95] > 4 / length(cook_dist)
+cook_dist[97] > 4 / length(cook_dist)
+```
+We can see that all those outliers are influential points, hence we should drop them.
+
+### f.
+
+```{r}
+termplot(m,partial.resid = T)
+```
+
+The flatness of the lines associated with all except for [lcavol, lweight] reflects their lack of significance.
+
+The model may be improved by dropping them.
+
+## 6.5
+```{r}
+data("cheddar")
+```
+
+```{r}
+m <- lm(taste ~ ., data=cheddar)
+```
+
+## a.
+```{r}
+residuals <- resid(m)
+```
+
+```{r}
+plot(fitted(m), residuals, col="grey", pch=20, xlab="Fitted", ylab="Residuals", main = "Cheddar data")
+abline(h=0, col="darkorange", lwd=2)
+```
+
+From the residual-fitted plot, spread of residuals is constant across the range of fitted values, hence the equal variance assumption is satisfied. In addition, the plot indicates some non-linearity.
+
+We can improve non-linearity by taking the sqrt.
+```{r}
+sqrt_m <- lm(sqrt(taste) ~ ., data=cheddar)
+plot(fitted(sqrt_m), residuals(sqrt_m), xlab = "Fitted", ylab = "Residuals")
+abline(h=0)
+```
+As variances hover more and more around 0, the non-linearity has been improved.
+
+## b.
+```{r}
+qqnorm(residuals)
+qqline(residuals)
+shapiro.test(residuals)
+```
+
+Since the shapiro p-value is more than 0.05, we fail the reject the null hypothesis of the test which is the residuals are normally distributed. Hence the normally assumption is satisfied. Hence the normally assumption is satisfied, which is also supported by the QQ plot.
+
+## c.
+```{r}
+hatvalues(m)[hatvalues(m) > 2 * mean(hatvalues(m))]
+```
+We can see that there are 0 leverage points.
+
+### d.
+```{r}
+rstandard(m)[abs(rstandard(m)) > 2]
+```
+We can see that observation [15] is an outlier.
+
+### e.
+```{r}
+cook_dist <- cooks.distance(m)
+```
+
+```{r}
+cook_dist[15] > 4 / length(cook_dist)
+```
+
+Observation [15] is an outlier and influential point, thus it should be dropped.
+
+### f.
+
+```{r}
+termplot(m,partial.resid = T)
+```
+
+The flatness of the lines associated with [Acetic] reflects their lack of significance.
+
+The model may be improved by dropping it.
+
+# 6.7
+
+```{r}
+data("tvdoctor")
+```
+
+```{r}
+m <- lm(life ~ ., data=tvdoctor)
+```
+
+## a.
+```{r}
+residuals <- resid(m)
+```
+
+```{r}
+plot(fitted(m), residuals, col="grey", pch=20, xlab="Fitted", ylab="Residuals", main = "tvdoctor data")
+abline(h=0, col="darkorange", lwd=2)
+```
+
+From the residual-fitted plot, spread of residuals is NOT constant across the range of fitted values, hence the equal variance assumption is violated In addition, the plot indicates lots of non-linearity and require a transformation of data.
+
+## b.
+```{r}
+qqnorm(residuals)
+qqline(residuals)
+shapiro.test(residuals)
+```
+
+Since the shapiro p-value is more than 0.05, we fail the reject the null hypothesis of the test which is the residuals are normally distributed. Hence the normally assumption is satisfied.
+
+## c.
+```{r}
+hatvalues(m)[hatvalues(m) > 2 * mean(hatvalues(m))]
+```
+We can see that [Bangladesh, Ethiopia, and Myanmar] are leverage points.
+
+### d.
+```{r}
+rstandard(m)[abs(rstandard(m)) > 2]
+```
+We can see that [Ethiopia, Sudan] are outliers.
+
+Since Ethiopia appeared in both leverage points and outliers, it has a significant pull to our linear model. Hence, it's better to remove it.
+
+### e.
+```{r}
+cook_dist <- cooks.distance(m)
+```
+
+```{r}
+cook_dist['Ethiopia'] > 4 / length(cook_dist)
+cook_dist['Sudan'] > 4 / length(cook_dist)
+```
+
+We can see that both [Ethiopia, Sudan] are influential points, and should be removed.
+
+### f.
+
+```{r}
+termplot(m,partial.resid = T)
+```
+
+There is no flatness of the lines hence all predictors are significant.

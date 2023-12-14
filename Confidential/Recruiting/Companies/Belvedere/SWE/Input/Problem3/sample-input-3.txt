@@ -1,0 +1,6 @@
+2 4
+adgb 5402.0 3 tadb 2 goog 2 meta 1
+tadb 2530.0 2 bbby 5 hmny 4
+goog 125.0
+meta 114.0
+bbby 225.0
