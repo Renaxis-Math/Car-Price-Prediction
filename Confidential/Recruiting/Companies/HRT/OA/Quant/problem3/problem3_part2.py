@@ -1,103 +1,117 @@
-# class Node:
-#     def __init__(self, key, value, children = []):
-#         self.key = key
-#         self.val = value
-#         self.children = children
+from typing import Optional
+
+class Node:
+    def __init__(self, *, key: int = -1, value: int = -1) -> None:
+        self.key = key
+        self.value = value
+        self.child_nodes = []
+        self.parent_node = None
+        return
         
-# def find_root_i(nodes):
-#     seen_children_i = set()
-
-#     for i, node in enumerate(nodes):
-#         key, val = node[0], node[1]
-#         if len(node) == 2: continue
-#         else: seen_children_i.update(node[1:])
-                
-#     root_i = 0
-#     for i in range(len(nodes)):
-#         if i not in seen_children_i: return i
-            
-#     return root_i
-
-# def build_tree(nodes):
-#     seenIndex_nodes = {}
-#     root_i = find_root_i(nodes)
-
-#     for i, node_package in enumerate(nodes):
-#         key, val, children_indices = node_package[0], node_package[1], node_package[2:]
-#         if i == root_i: 
-#             root = Node(key, val, children_indices)
-#             seenIndex_nodes[i] = root
-#         else:
-#             cur_node = Node(key, val, children_indices)
-#             seenIndex_nodes[i] = cur_node
-            
-#     for i in range(len(nodes)):
-#         cur_node = seenIndex_nodes[i]
-#         cur_children_indices = cur_node.children
-
-#         for j in range(len(cur_children_indices) - 1, -1, -1):
-#             cur_children_i = cur_children_indices[j]
-#             child_node = seenIndex_nodes[cur_children_i]
-#             cur_node.children[j] = child_node
+    def add_child_node(self, child_node: 'Node') -> None: # Forward Reference Technique
+        self.child_nodes.append(child_node)
+        return
+    
+    def get_child_nodes(self) -> list['Node']:
+        return [child_node for child_node in self.child_nodes]
+    
+    def set_parent_node(self, node: 'Node') -> None:
+        self.parent_node = node
+        return
+    
+class Tree:
+    def __init__(self, nodeIndex_node_map: dict = {}) -> None:
+        self.root_index = self._find_root_index(nodeIndex_node_map)
+        self.root_node = nodeIndex_node_map[self.root_index] if self.root_index != -1 else None
+        return
         
-#         seenIndex_nodes[i] = cur_node        
+    def _find_root_index(self, nodeIndex_node_map: dict) -> int:
+        for i, node in nodeIndex_node_map.items():
+            if node.parent_node is None: return i
+        return -1
     
-#     root = seenIndex_nodes[root_i]
-#     return root
+    def debug(self, nodeIndex_node_map) -> None:
+        if isinstance(nodeIndex_node_map, dict):
+            for i, node in nodeIndex_node_map.items():
+                print(f"Node {i}:")
+                print(node.key, node.value)
+                print(f"Children = {node.child_nodes}")
+                print(f"Parent = {node.parent_node}")
+        print(f"Root index is {self.root_index}")
+        return
+    
+    def get_root_node(self) -> 'Node':
+        return self.root_node
 
-# def preOrder_traverse(root):
-#     answers = []
-#     stack = [root]
-    
-#     while stack:
-#         nodes_count = len(stack)
-#         for _ in range(nodes_count):
-#             cur_node = stack.pop()
-#             key, val = cur_node.key, cur_node.val
+def build_nodeIndex_node_map(nodes_list: list[list[int]]) -> dict:
+    nodeIndex_node_map = {i: Node(key=nodes_list[i][0], value=nodes_list[i][1]) 
+                        for i in range(len(nodes_list))}
+
+    for node_index, node in nodeIndex_node_map.items():
+        _, _, *child_indices = nodes_list[node_index]
+        for child_index in child_indices:
+            child_node = nodeIndex_node_map[child_index]
             
-#             answers.extend([key, val])
+            child_node.set_parent_node(node)
+            node.add_child_node(child_node)
+    
+    return nodeIndex_node_map 
 
-#             for child in cur_node.children[::-1]:
-#                 stack.append(child)
+def preOrder_traversal(answers: list, node: Optional['Node'] = None) -> None:
+    if node is None: return
+    answers.extend([node.key, node.value])
+    for child_node in node.child_nodes:
+        preOrder_traversal(answers, child_node)
+    return
 
-#     return answers         
+def build_common_keys_dict(X_child_nodes: list['Node'], Y_child_nodes: list['Node']) -> dict:
+    answers = {X_child_node.key : [X_child_node] for X_child_node in X_child_nodes}
 
-# def merge(left_root, right_root):
-#     left_children = left_root.children
-#     right_children = right_root.children
+    for Y_child_node in Y_child_nodes:
+        if Y_child_node.key in answers: answers[Y_child_node.key].append(Y_child_node)
     
-#     # Build children of merged node
-#     left_key_childNode_map = {left_children[i].key : left_children[i] for i in range(len(left_children))}
-#     right_key_childNode_map = {right_children[i].key : right_children[i] for i in range(len(right_children))}
-    
-#     merged_children_nodes = []
-#     for left_child_node in left_children:
-#         if left_child_node.key in right_key_childNode_map:
-#             right_child_node = right_key_childNode_map[left_child_node.key]
-#             new_child_node = merge(left_child_node, right_child_node)
-            
-#             merged_children_nodes.append(new_child_node)
-#         else: 
-#             merged_children_nodes.append(left_child_node)
-    
-#     for right_child_node in right_children:
-#         if right_child_node.key in left_key_childNode_map: continue
-#         else: merged_children_nodes.append(right_child_node)
-#      # \ Build children of merged node
-            
-#     new_root = Node(left_root.key, right_root.val, merged_children_nodes)
-#     return new_root
+    temp_answers = answers.copy()
+    for common_key in temp_answers:
+        if len(temp_answers[common_key]) < 2: del answers[common_key]
 
-# def solution(left, right):
-#     left_root = build_tree(left)
-#     right_root = build_tree(right)
+    return answers
+
+def merge(left_node: 'Node', right_node: 'Node') -> 'Node':
+    merged_root = Node(key = right_node.key, value = right_node.value)
     
-#     if left_root.key != right_root.key: return []
+    X_child_nodes = left_node.get_child_nodes()
+    Y_child_nodes = right_node.get_child_nodes()
+    commonKeys_XYnodes_map = build_common_keys_dict(X_child_nodes, Y_child_nodes)
     
-#     merged_root = merge(left_root, right_root)
-#     answer = preOrder_traverse(merged_root)
+    merged_child_nodes = [X_child_node for X_child_node in X_child_nodes]
+    for i, X_child_node in enumerate(merged_child_nodes):
+        if X_child_node.key in commonKeys_XYnodes_map:
+            Y_child_node = commonKeys_XYnodes_map[X_child_node.key][1]
+            merged_child_nodes[i] = merge(X_child_node, Y_child_node)
     
-#     return answer
+    for Y_child_node in Y_child_nodes:
+        if Y_child_node.key not in commonKeys_XYnodes_map: 
+            merged_child_nodes.append(Y_child_node)
+    
+    for merged_child_node in merged_child_nodes: merged_root.add_child_node(merged_child_node)
+    return merged_root
+    
+def solution(left: list[list[int]], right: list[list[int]]) -> list[int]:
+    left_nodeIndex_node_map = build_nodeIndex_node_map(left)
+    right_nodeIndex_node_map = build_nodeIndex_node_map(right)
+    
+    left_tree, right_tree = Tree(left_nodeIndex_node_map), Tree(right_nodeIndex_node_map)
+    
+    left_root, right_root = left_tree.get_root_node(), right_tree.get_root_node()
+    if left_root.key != right_root.key: return [] # We know for sure that left_root & right_root aren't None
+    
+    merged_root = merge(left_root, right_root)
+    
+    answers = []
+    preOrder_traversal(answers, merged_root)
+    
+    return answers
+
 
 left = [[4,2], 
  [1,15,3,2,0], 
